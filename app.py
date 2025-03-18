@@ -8,7 +8,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
 from sklearn.metrics import roc_curve, auc, confusion_matrix
 from imblearn.over_sampling import SMOTE
-from sklearn.preprocessing import OneHotEncoder
 
 # Ignore warnings for cleaner output
 import warnings
@@ -20,18 +19,15 @@ st.set_page_config(page_title="Credit Card Fraud Detection", layout="wide")
 # Load the dataset
 @st.cache_data
 def load_data():
-    train_df = pd.read_csv("train.csv")
-    test_df = pd.read_csv("test.csv")
-    return train_df, test_df
+    train_df = pd.read_csv("e:/semester notes/sem 7/Credit card/major_credit/train.csv")
+    return train_df
 
-train_df, test_df = load_data()
+train_df = load_data()
 
 # Data preprocessing
 def preprocess_data(df):
-    # Convert transaction time to datetime with the correct format
-    # df['trans_date_trans_time'] = pd.to_datetime(df['trans_date_trans_time'], format='%d-%m-%Y %H:%M')
-    
-    # # Extract hour and day of the week
+    # Convert transaction time to datetime
+    # df['trans_date_trans_time'] = pd.to_datetime(df['trans_date_trans_time'])
     # df['hour'] = df['trans_date_trans_time'].dt.hour
     # df['day_of_week'] = df['trans_date_trans_time'].dt.dayofweek
 
@@ -45,18 +41,22 @@ def preprocess_data(df):
     return df
 
 train_df = preprocess_data(train_df)
-test_df = preprocess_data(test_df)
 
 # Select features and target
 X = train_df.drop('is_fraud', axis=1)
 y = train_df['is_fraud']
 
+# Check for non-numeric columns and drop them (if any)
+non_numeric_columns = X.select_dtypes(include=['object']).columns
+if len(non_numeric_columns) > 0:
+    X = X.drop(non_numeric_columns, axis=1)
+
 # Handle imbalanced data
 smote = SMOTE(random_state=42)
 X_res, y_res = smote.fit_resample(X, y)
 
-# Split the dataset into training and testing sets
-train_X, test_X, train_Y, test_Y = train_test_split(X_res, y_res, test_size=0.25, random_state=42, stratify=y_res)
+# Split the dataset into training and validation sets
+train_X, val_X, train_Y, val_Y = train_test_split(X_res, y_res, test_size=0.25, random_state=42, stratify=y_res)
 
 # Setting up the hyperparameter grid for Random Forest tuning
 param_grid = {
@@ -207,59 +207,26 @@ if st.sidebar.button("Predict Fraud"):
     fig_feature_importance = px.bar(x=features, y=feature_importances, labels={'x': 'Features', 'y': 'Importance'}, title="Feature Importance")
     st.plotly_chart(fig_feature_importance)
 
-    # Explanation for Feature Importance
-    st.markdown(
-        """
-        <div class="explanation">
-            The <span class="highlight">Feature Importance</span> plot shows the contribution of each feature to the model's predictions. 
-            Features with higher importance have a greater impact on the model's decisions.
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
     # Confusion Matrix
     st.markdown("<h2 style='color: white;'>Confusion Matrix</h2>", unsafe_allow_html=True)
-    predictions_test_rf = best_rf.predict(test_X)
-    conf_matrix = confusion_matrix(test_Y, predictions_test_rf)
+    predictions_val_rf = best_rf.predict(val_X)
+    conf_matrix = confusion_matrix(val_Y, predictions_val_rf)
     fig_conf_matrix = px.imshow(conf_matrix, labels=dict(x="Predicted", y="Actual", color="Count"), 
                                 x=["Not Fraud", "Fraud"], y=["Not Fraud", "Fraud"], 
-                                title="Confusion Matrix (Test Data)")
+                                title="Confusion Matrix (Validation Data)")
     st.plotly_chart(fig_conf_matrix)
-
-    # Explanation for Confusion Matrix
-    st.markdown(
-        """
-        <div class="explanation">
-            The <span class="highlight">Confusion Matrix</span> shows the number of True Positives (TP), True Negatives (TN), False Positives (FP), and False Negatives (FN). 
-            It helps evaluate the model's performance in classifying transactions.
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
     # ROC Curve
     st.markdown("<h2 style='color: white;'>ROC Curve</h2>", unsafe_allow_html=True)
-    fpr, tpr, thresholds = roc_curve(test_Y, best_rf.predict_proba(test_X)[:,1])
+    fpr, tpr, thresholds = roc_curve(val_Y, best_rf.predict_proba(val_X)[:,1])
     roc_auc = auc(fpr, tpr)
     fig_roc = px.line(x=fpr, y=tpr, title=f'ROC Curve (AUC = {roc_auc:.2f})', labels={'x': 'False Positive Rate', 'y': 'True Positive Rate'})
     st.plotly_chart(fig_roc)
 
-    # Explanation for ROC Curve
-    st.markdown(
-        """
-        <div class="explanation">
-            The <span class="highlight">ROC Curve</span> shows the trade-off between the True Positive Rate (TPR) and False Positive Rate (FPR). 
-            A curve closer to the top-left corner indicates better model performance.
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
     # Model Accuracy
     st.markdown("<h2 style='color: white;'>Model Accuracy</h2>", unsafe_allow_html=True)
     accuracy_train_rf = metrics.accuracy_score(train_Y, best_rf.predict(train_X))
-    accuracy_test_rf = metrics.accuracy_score(test_Y, predictions_test_rf)
+    accuracy_val_rf = metrics.accuracy_score(val_Y, predictions_val_rf)
 
     # Display Model Accuracy in a card
     st.markdown(
@@ -267,20 +234,8 @@ if st.sidebar.button("Predict Fraud"):
         <div class="card">
             <h3>Model Accuracy</h3>
             <p>Training Data: {accuracy_train_rf:.2f}</p>
-            <p>Test Data: {accuracy_test_rf:.2f}</p>
+            <p>Validation Data: {accuracy_val_rf:.2f}</p>
         </div>
         """,
         unsafe_allow_html=True
     )
-
-    # Explanation for Model Accuracy
-    st.markdown(
-        """
-        <div class="explanation">
-            The <span class="highlight">Model Accuracy</span> represents the percentage of correct predictions made by the model on the training and test datasets.
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    
-    
