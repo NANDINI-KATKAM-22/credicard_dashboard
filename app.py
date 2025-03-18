@@ -1,4 +1,5 @@
 import streamlit as st
+# Set page config FIRST
 st.set_page_config(page_title="Credit Card Fraud Detection", layout="wide")
 import pandas as pd
 import numpy as np
@@ -13,7 +14,6 @@ from imblearn.over_sampling import SMOTE
 import warnings
 warnings.filterwarnings('ignore')
 
-# Set page config FIRST
 
 
 # Load the dataset
@@ -111,7 +111,7 @@ st.markdown(
     }
     .explanation {
         font-size: 14px;
-        color: #cccccc;
+        color: #FFD700;
         margin-bottom: 20px;
     }
     .highlight {
@@ -197,6 +197,15 @@ if st.sidebar.button("Predict Fraud"):
 
     # Feature Importance Plot
     st.markdown("<h2 style='color: white;'>Feature Importance</h2>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="explanation">
+            The <span class="highlight">Feature Importance</span> plot shows which features (variables) are most important in predicting fraud. 
+            Higher bars indicate features that contribute more to the model's decision-making process.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     feature_importances = best_rf.feature_importances_
     features = X.columns
     plt.figure(figsize=(10, 6))
@@ -204,11 +213,20 @@ if st.sidebar.button("Predict Fraud"):
     plt.xlabel('Features')
     plt.ylabel('Importance')
     plt.title('Feature Importance')
-    plt.xticks(rotation=90)
+    plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better readability
     st.pyplot(plt)
 
     # Confusion Matrix
     st.markdown("<h2 style='color: white;'>Confusion Matrix</h2>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="explanation">
+            The <span class="highlight">Confusion Matrix</span> shows the performance of the model on the validation data. 
+            It displays the number of correct and incorrect predictions for each class (Fraud/Not Fraud).
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     predictions_val_rf = best_rf.predict(val_X)
     conf_matrix = confusion_matrix(val_Y, predictions_val_rf)
     plt.figure(figsize=(6, 6))
@@ -225,9 +243,18 @@ if st.sidebar.button("Predict Fraud"):
 
     # ROC Curve
     st.markdown("<h2 style='color: white;'>ROC Curve</h2>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="explanation">
+            The <span class="highlight">ROC Curve</span> (Receiver Operating Characteristic Curve) shows the trade-off between the True Positive Rate (TPR) and the False Positive Rate (FPR). 
+            A higher area under the curve (AUC) indicates better model performance.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     fpr, tpr, thresholds = roc_curve(val_Y, best_rf.predict_proba(val_X)[:,1])
     roc_auc = auc(fpr, tpr)
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(6, 6))
     plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
     plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
     plt.xlabel('False Positive Rate')
@@ -238,6 +265,18 @@ if st.sidebar.button("Predict Fraud"):
 
     # Model Accuracy
     st.markdown("<h2 style='color: white;'>Model Accuracy</h2>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="explanation">
+            The <span class="highlight">Model Accuracy</span> measures how often the model's predictions are correct. 
+            <ul>
+                <li><span class="highlight">Training Data Accuracy</span>: Accuracy on the data used to train the model.</li>
+                <li><span class="highlight">Validation Data Accuracy</span>: Accuracy on unseen data used to evaluate the model's performance.</li>
+            </ul>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     accuracy_train_rf = metrics.accuracy_score(train_Y, best_rf.predict(train_X))
     accuracy_val_rf = metrics.accuracy_score(val_Y, predictions_val_rf)
 
