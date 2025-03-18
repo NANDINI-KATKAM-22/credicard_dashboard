@@ -19,7 +19,7 @@ warnings.filterwarnings('ignore')
 # Load the dataset
 @st.cache_data
 def load_data():
-    train_df = pd.read_csv("e:/semester notes/sem 7/Credit card/major_credit/train.csv")
+    train_df = pd.read_csv("train.csv")
     return train_df
 
 train_df = load_data()
