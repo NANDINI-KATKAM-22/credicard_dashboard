@@ -2,8 +2,7 @@ import streamlit as st
 st.set_page_config(page_title="Credit Card Fraud Detection", layout="wide")
 import pandas as pd
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
@@ -20,18 +19,13 @@ warnings.filterwarnings('ignore')
 # Load the dataset
 @st.cache_data
 def load_data():
-    train_df = pd.read_csv("train.csv")
+    train_df = pd.read_csv("e:/semester notes/sem 7/Credit card/major_credit/train.csv")
     return train_df
 
 train_df = load_data()
 
 # Data preprocessing
 def preprocess_data(df):
-    # Convert transaction time to datetime
-    # df['trans_date_trans_time'] = pd.to_datetime(df['trans_date_trans_time'])
-    # df['hour'] = df['trans_date_trans_time'].dt.hour
-    # df['day_of_week'] = df['trans_date_trans_time'].dt.dayofweek
-
     # Drop irrelevant columns
     df = df.drop(['trans_date_trans_time', 'first', 'last', 'street', 'city', 'zip','job','dob', 'trans_num', 'unix_time'], axis=1)
 
@@ -205,24 +199,42 @@ if st.sidebar.button("Predict Fraud"):
     st.markdown("<h2 style='color: white;'>Feature Importance</h2>", unsafe_allow_html=True)
     feature_importances = best_rf.feature_importances_
     features = X.columns
-    fig_feature_importance = px.bar(x=features, y=feature_importances, labels={'x': 'Features', 'y': 'Importance'}, title="Feature Importance")
-    st.plotly_chart(fig_feature_importance)
+    plt.figure(figsize=(10, 6))
+    plt.bar(features, feature_importances)
+    plt.xlabel('Features')
+    plt.ylabel('Importance')
+    plt.title('Feature Importance')
+    plt.xticks(rotation=90)
+    st.pyplot(plt)
 
     # Confusion Matrix
     st.markdown("<h2 style='color: white;'>Confusion Matrix</h2>", unsafe_allow_html=True)
     predictions_val_rf = best_rf.predict(val_X)
     conf_matrix = confusion_matrix(val_Y, predictions_val_rf)
-    fig_conf_matrix = px.imshow(conf_matrix, labels=dict(x="Predicted", y="Actual", color="Count"), 
-                                x=["Not Fraud", "Fraud"], y=["Not Fraud", "Fraud"], 
-                                title="Confusion Matrix (Validation Data)")
-    st.plotly_chart(fig_conf_matrix)
+    plt.figure(figsize=(6, 6))
+    plt.imshow(conf_matrix, cmap=plt.cm.Blues)
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.title('Confusion Matrix (Validation Data)')
+    plt.xticks([0, 1], ['Not Fraud', 'Fraud'])
+    plt.yticks([0, 1], ['Not Fraud', 'Fraud'])
+    for i in range(2):
+        for j in range(2):
+            plt.text(j, i, conf_matrix[i, j], ha='center', va='center', color='red')
+    st.pyplot(plt)
 
     # ROC Curve
     st.markdown("<h2 style='color: white;'>ROC Curve</h2>", unsafe_allow_html=True)
     fpr, tpr, thresholds = roc_curve(val_Y, best_rf.predict_proba(val_X)[:,1])
     roc_auc = auc(fpr, tpr)
-    fig_roc = px.line(x=fpr, y=tpr, title=f'ROC Curve (AUC = {roc_auc:.2f})', labels={'x': 'False Positive Rate', 'y': 'True Positive Rate'})
-    st.plotly_chart(fig_roc)
+    plt.figure(figsize=(8, 6))
+    plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC Curve')
+    plt.legend(loc='lower right')
+    st.pyplot(plt)
 
     # Model Accuracy
     st.markdown("<h2 style='color: white;'>Model Accuracy</h2>", unsafe_allow_html=True)
