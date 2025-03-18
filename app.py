@@ -1,4 +1,5 @@
 import streamlit as st
+st.set_page_config(page_title="Credit Card Fraud Detection", layout="wide")
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -14,12 +15,12 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Set page config FIRST
-st.set_page_config(page_title="Credit Card Fraud Detection", layout="wide")
+
 
 # Load the dataset
 @st.cache_data
 def load_data():
-    train_df = pd.read_csv("e:/semester notes/sem 7/Credit card/major_credit/train.csv")
+    train_df = pd.read_csv("train.csv")
     return train_df
 
 train_df = load_data()
