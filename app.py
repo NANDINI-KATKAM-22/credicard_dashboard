@@ -140,13 +140,13 @@ st.sidebar.header("User Input")
 st.sidebar.write("Enter transaction details:")
 
 # Simulate raw transaction data input
-amt = st.sidebar.number_input("Transaction Amount", min_value=0.0)
+amt = st.sidebar.number_input("Transaction Amount", min_value=1000.0)
 category = st.sidebar.selectbox("Category", ['grocery_pos', 'entertainment', 'gas_transport', 'misc_pos', 'shopping_net'])
-hour = st.sidebar.slider("Hour of Day", 0, 23)
-day_of_week = st.sidebar.slider("Day of Week", 0, 6)
+hour = st.sidebar.slider("Hour of Day", 6, 23)
+day_of_week = st.sidebar.slider("Day of Week", 1, 6)
 lat = st.sidebar.number_input("Latitude")
 long = st.sidebar.number_input("Longitude")
-city_pop = st.sidebar.number_input("City Population", min_value=0)
+city_pop = st.sidebar.number_input("City Population", min_value=1000)
 
 # Add an "Enter" button to trigger prediction
 if st.sidebar.button("Predict Fraud"):
